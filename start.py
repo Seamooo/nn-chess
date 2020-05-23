@@ -13,20 +13,71 @@ def get_index():
 def send_img(path):
 	return send_from_directory('img', path)
 
+def score(state):
+	return random.random()
+
+#hyper parameter
+probability_reduc = 0.8
+
+def dfs(state, num_searches, isplayer, prob):
+	comp = max if isplayer else min
+	board = Board(state)
+	if(board.is_checkmate()):
+		return (0 if isplayer else 1, num_searches)
+	if(board.is_stalemate()):
+		return 0.5, num_searches
+	if(board.can_claim_draw()):
+		return 0.5, num_searches
+	rv = 0 if isplayer else 1
+	for move in board.legal_moves:
+		if(random.random()<prob):
+			if(num_searches > 0):
+				num_searches -= 1
+				board.push(move)
+				ret, num_searches = dfs(board.fen(), num_searches, isplayer, prob*probability_reduc)
+				rv = comp(rv,ret)
+				board.pop()
+				continue
+		board.push(move)
+		comp(rv,score(board.fen()))
+		board.pop()
+	return rv, num_searches
+
+
+def get_move(state):
+	#assume both players play the best moves
+	#states where you play, take the maximum calculated as rv
+	#states where opponent plays, take the min calculated as rv
+	#limit number of searches artificially for now
+	#choose better numbers later
+	print('started search over state', state)
+	search_limit = 100
+	board = Board(state)
+	mx = 0
+	rv = None
+	for move in board.legal_moves:
+		board.push(move)
+		val, _ = dfs(board.fen(), search_limit, False, probability_reduc)
+		if(val > mx):
+			rv = move
+			mx = val
+		board.pop()
+	print('found move', rv)
+	return rv
+
 @app.route('/ai', methods=['POST'])
-def get_move():
+def ai_move():
 	data = request.json
 	if 'state' not in data:
-		abort(400)
+		return 'bad request', 400
+		"""
 	try:
-		board = Board(data['state'])
+		move = get_move(data['state'])
 	except Exception as e:
-		abort(400)
-	moves = list(board.legal_moves)
-	if not moves:
-		abort(400)
-	move = random.choice(moves)
-	print(move)
+		print(e)
+		return str(e), 400
+		"""
+	move = get_move(data['state'])
 	return jsonify({'from':str(move)[:2],'to':str(move)[2:]})
 
 #server running on port 4444

@@ -42,6 +42,7 @@
         type:'POST',
         //TODO change promotion
         success: (result) =>{
+          console.log(result);
           let move = game.move({
             from:result.from,
             to:result.to,
@@ -61,7 +62,6 @@
         promotion: 'q'
       });
       if(move === null) return 'snapback';
-      console.log('here');
       makeAImove();
     };
 
@@ -112,6 +112,7 @@
     board = Chessboard('board', board_config);
     $('#pvaibtn').on('click', newPvaiGame);
     $('#aivaibtn').on('click', newAivaiGame);
+    newPvaiGame();
   </script>
 </body>
 </html>
