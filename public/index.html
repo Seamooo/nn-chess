@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chess GUI</title>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script>
+  <link rel="stylesheet"
+  href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
+  integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU"
+  crossorigin="anonymous">
+  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
+  integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
+  crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.min.js" integrity="sha384-E8jJkIbgL14NP9/2S/pwuPBtvO5bb4Xnl6azfoTYWt9jqCgRjyRI8WD5BCKJCyMJ" crossorigin="anonymous"></script>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js" integrity="sha384-1CmrxMRARb6aLqgBO7yyAxTOQE2AKb9GfXnEo760AUcUmFx3ibVJJAzGytlQcNXd" crossorigin="anonymous"></script>
+  <script>
+    //below code adapted from https://chessboardjs.com/examples.html#5003
+    let board = null;
+    let game = new Chess();
+    let whiteSquareGrey = '#a9a9a9';
+    let blackSquareGrey = '#696969';
+    let playerIsWhite = Math.floor(Math.random()*2);
+    let hasPlayer = true;
+    const onDragStart = (source,piece) => {
+      if(game.game_over()) return false;
+      if((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+        (game.turn() === 'b' && piece.search(/^w/) !== -1)){
+        return false;
+      }
+    };
+
+    const onDrop = (source, target) => {
+      let move = game.move({
+        from: source,
+        to: target,
+        promotion: 'q'
+      });
+      if(move === null) return 'snapback';
+    };
+
+    const onSnapEnd = () => {
+      board.position(game.fen())
+    };
+
+    const board_config = {
+      draggable: true,
+      dropOffBoard: 'snapback',
+      onDragStart: onDragStart,
+      onDrop: onDrop,
+      onSnapEnd: onSnapEnd,
+      position: 'start',
+      showErrors: 'console'
+    };
+
+    //dummy function for now
+    const makeAImove = () =>{
+      return;
+    }
+
+    const startGame = () =>{
+      playerIsWhite = !playerIsWhite;
+      game = new Chess();
+      board.start();
+      makeAImove();
+    }
+
+    const newPvaiGame = () =>{
+      hasPlayer = true;
+      playerIsWhite = !playerIsWhite;
+      startGame();
+    };
+
+    const newAivaiGame = () =>{
+      hasPlayer = false;
+      startGame();
+    };
+
+  </script>
+</head>
+<body>
+  <div style="display:block;margin-right:auto;margin-left:auto;width:400px;padding-top:5px">
+    <div id="board" style="width: 400px;"></div>
+  </div>
+  <div class="text-center" style="padding-top:5px;">
+      <button id="aivaibtn" class="btn btn-primary" style="width:195px;">AI vs AI</button>
+      <button id="pvaibtn" class="btn btn-success" style="width:195px;">Player vs AI</button>
+    </div>
+  </div>
+  <script>
+    board = Chessboard('board', board_config);
+    $('#pvaibtn').on('click', newPvaiGame);
+    $('#aivaibtn').on('click', newAivaiGame);
+  </script>
+</body>
+</html>
