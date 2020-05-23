@@ -20,7 +20,7 @@
     let game = new Chess();
     let whiteSquareGrey = '#a9a9a9';
     let blackSquareGrey = '#696969';
-    let playerIsWhite = Math.floor(Math.random()*2);
+    let playerIsWhite = [true,false][Math.floor(Math.random()*2)];
     let hasPlayer = true;
     const onDragStart = (source,piece) => {
       if(game.game_over()) return false;
@@ -30,13 +30,39 @@
       }
     };
 
+    const makeAImove = () =>{
+      if(game.game_over()) return;
+      if(hasPlayer && ((playerIsWhite&&game.turn() === 'w') || (!playerIsWhite&&game.turn()==='b'))) return;
+      $.ajax({
+        url:'/ai',
+        contentType:'application/json',
+        data:JSON.stringify({
+          state:game.fen()
+        }),
+        type:'POST',
+        //TODO change promotion
+        success: (result) =>{
+          let move = game.move({
+            from:result.from,
+            to:result.to,
+            promotion: 'q'
+          });
+          if(move === null) return console.error('ai made illegal move', result.from, result.to);
+          board.move(result.from + '-' + result.to);
+        }
+      });
+    };
+
     const onDrop = (source, target) => {
+      //will change promotion later
       let move = game.move({
         from: source,
         to: target,
         promotion: 'q'
       });
       if(move === null) return 'snapback';
+      console.log('here');
+      makeAImove();
     };
 
     const onSnapEnd = () => {
@@ -53,13 +79,7 @@
       showErrors: 'console'
     };
 
-    //dummy function for now
-    const makeAImove = () =>{
-      return;
-    }
-
     const startGame = () =>{
-      playerIsWhite = !playerIsWhite;
       game = new Chess();
       board.start();
       makeAImove();
@@ -68,6 +88,7 @@
     const newPvaiGame = () =>{
       hasPlayer = true;
       playerIsWhite = !playerIsWhite;
+      board.orientation(playerIsWhite?'white':'black');
       startGame();
     };
 
