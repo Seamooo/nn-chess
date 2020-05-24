@@ -24,4 +24,7 @@ Notes
 -----
 All testing done on MacOS Mojave.  
 Should be compatible with all unix operating systems but no guarantees  
-
+**TODO**  
+- efficient legal move calculation
+- efficient draw/stalemate/checkmate calculation
+- the entire ML pipeline
