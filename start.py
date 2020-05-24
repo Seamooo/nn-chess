@@ -103,7 +103,12 @@ def ai_move():
 	except Exception as e:
 		print(e)
 		return 'bad request', 400
-	return jsonify({'from':str(move)[:2],'to':str(move)[2:]})
+	rv = str(move)
+	return jsonify({
+		'from':rv[:2],
+		'to':rv[2:4],
+		'promote':'' if len(rv) < 5 else rv[5]
+		})
 
 #server running on port 4444
 if __name__ == '__main__':

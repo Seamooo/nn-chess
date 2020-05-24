@@ -46,7 +46,7 @@
           let move = game.move({
             from:result.from,
             to:result.to,
-            promotion: 'q'
+            promotion:result.promote
           });
           if(move === null){
             console.error('ai made illegal move', result.from, result.to);
