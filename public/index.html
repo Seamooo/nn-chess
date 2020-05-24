@@ -48,8 +48,14 @@
             to:result.to,
             promotion: 'q'
           });
-          if(move === null) return console.error('ai made illegal move', result.from, result.to);
-          board.move(result.from + '-' + result.to);
+          if(move === null){
+            console.error('ai made illegal move', result.from, result.to);
+            makeAImove();
+          }
+          else{
+            board.move(result.from + '-' + result.to);
+            if(!hasPlayer) makeAImove();
+          }
         }
       });
     };

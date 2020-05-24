@@ -16,33 +16,58 @@ def send_img(path):
 def score(state):
 	return random.random()
 
-#hyper parameter
-probability_reduc = 0.8
+# not really mcts at the moment
+# closer to randomised minimax
 
-def dfs(state, num_searches, isplayer, prob):
+def dfs(state, num_searches, isplayer):
 	comp = max if isplayer else min
 	board = Board(state)
 	if(board.is_checkmate()):
-		return (0 if isplayer else 1, num_searches)
+		return 0.0 if isplayer else 1.0
 	if(board.is_stalemate()):
-		return 0.5, num_searches
+		return 0.5
 	if(board.can_claim_draw()):
-		return 0.5, num_searches
-	rv = 0 if isplayer else 1
-	for move in board.legal_moves:
-		if(random.random()<prob):
-			if(num_searches > 0):
-				num_searches -= 1
-				board.push(move)
-				ret, num_searches = dfs(board.fen(), num_searches, isplayer, prob*probability_reduc)
-				rv = comp(rv,ret)
-				board.pop()
-				continue
-		board.push(move)
-		comp(rv,score(board.fen()))
-		board.pop()
-	return rv, num_searches
-
+		return 0.5
+	rv = 0.0 if isplayer else 1.0
+	moves = list(board.legal_moves)
+	# if number of nodes to search exceeds the search limit provided
+	# score all nodes
+	if(len(moves) > num_searches):
+		for move in moves:
+			board.push(move)
+			rv = comp(rv,score(board.fen()))
+			board.pop()
+		return rv
+	search_move = [False for _ in range(len(moves))]
+	search_count = 0
+	i = 0
+	while i < len(moves):
+		inc = min(60, len(moves)-i)
+		# gives 50% chance for all nodes to be searched
+		# TODO make an adjustable probability parameter
+		tp = random.randrange(1<<inc)
+		while tp > 0:
+			if(tp&1):
+				search_move[i] = True
+				search_count += 1
+			tp >>= 1
+		i += inc
+	score_count = len(moves) - search_count
+	nodes_per_search = 0
+	if(search_count != 0):
+		nodes_per_search = (num_searches - score_count) // search_count
+	vals = []
+	for i in range(len(moves)):
+		move = moves[i]
+		if search_move[i]:
+			board.push(move)
+			rv = comp(rv,dfs(board.fen(), nodes_per_search, not isplayer))
+			board.pop()
+		else:
+			board.push(move)
+			rv = comp(rv, score(move))
+			board.pop()
+	return rv
 
 def get_move(state):
 	#assume both players play the best moves
@@ -51,17 +76,20 @@ def get_move(state):
 	#limit number of searches artificially for now
 	#choose better numbers later
 	print('started search over state', state)
-	search_limit = 100
+	search_limit = 1000
 	board = Board(state)
 	mx = 0
 	rv = None
+	vals = []
 	for move in board.legal_moves:
 		board.push(move)
-		val, _ = dfs(board.fen(), search_limit, False, probability_reduc)
+		val = dfs(board.fen(), search_limit, False)
 		if(val > mx):
 			rv = move
 			mx = val
 		board.pop()
+		vals.append((str(move), val))
+	print(vals)
 	print('found move', rv)
 	return rv
 
@@ -70,14 +98,11 @@ def ai_move():
 	data = request.json
 	if 'state' not in data:
 		return 'bad request', 400
-		"""
 	try:
 		move = get_move(data['state'])
 	except Exception as e:
 		print(e)
-		return str(e), 400
-		"""
-	move = get_move(data['state'])
+		return 'bad request', 400
 	return jsonify({'from':str(move)[:2],'to':str(move)[2:]})
 
 #server running on port 4444
